@@ -1,0 +1,521 @@
+# Solidity 漏洞检测系统
+
+基于图神经网络(GNN)的智能 Solidity 安全漏洞检测系统，提供完整的后端API和现代化前端界面。
+
+## 📚 引用
+
+本项目基于以下研究工作：
+
+```bibtex
+@inproceedings{zhuang2020smart,
+  title={Smart Contract Vulnerability Detection using Graph Neural Network.},
+  author={Zhuang, Yuan and Liu, Zhenguang and Qian, Peng and Liu, Qi and Wang, Xiang and He, Qinming},
+  booktitle={IJCAI},
+  pages={3283--3290},
+  year={2020}
+}
+```
+
+原 GNN 模型代码来自: [GNNSCVulDetector](https://github.com/Messi-Q/GNNSCVulDetector)
+
+## ⚡ 快速开始
+
+### Windows 用户
+
+1. **下载项目**
+   ```bash
+   git clone <repository-url>
+   cd solidity-vulnerability-detector
+   ```
+
+2. **一键安装**
+   ```
+   双击运行 install.bat
+   ```
+
+3. **一键启动**
+   ```
+   双击运行 start.bat
+   ```
+
+4. **访问应用**
+   ```
+   打开浏览器访问: http://localhost:8080
+   ```
+
+### Linux/macOS 用户
+
+```bash
+# 1. 安装依赖
+pip install -r backend/requirements.txt
+cd frontend/web && npm install
+
+# 2. 启动后端
+uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
+
+# 3. 启动前端 (新终端)
+cd frontend/web
+npm run serve
+```
+
+## 🚀 特性
+
+- **智能检测**: 使用图神经网络分析 Solidity 代码中的安全漏洞
+- **现代化前端**: 基于 Vue.js 3 + View UI Plus 的响应式界面，包含渐变背景和动画效果
+- **全局导航**: 左侧导航栏在所有页面常驻，提供流畅的用户体验
+- **RESTful API**: FastAPI 提供高性能的后端服务
+- **用户认证**: JWT 令牌认证系统
+- **历史记录**: 本地存储检测历史，支持查看和管理
+- **实时状态**: API 健康检查和系统监控
+- **响应式设计**: 适配桌面和移动设备
+- **美化界面**: 现代化的卡片布局、图标和配色方案
+
+## 🏗️ 系统架构
+
+```
+Solidity 漏洞检测系统
+├── frontend/              # 前端应用目录
+│   └── web/              # Vue.js 前端源码
+│       ├── src/
+│       │   ├── components/    # Vue 组件
+│       │   │   ├── AppLayout.vue     # 全局布局（含导航栏）
+│       │   │   ├── Dashboard.vue     # 主页仪表板
+│       │   │   ├── UserLogin.vue     # 用户登录
+│       │   │   ├── VulnerabilityDetect.vue  # 漏洞检测
+│       │   │   ├── DetectionHistory.vue     # 检测历史
+│       │   │   ├── UserGuide.vue     # 使用指南
+│       │   │   └── SystemInfo.vue    # 系统信息
+│       │   ├── router.js      # Vue Router 配置
+│       │   └── main.js        # 应用入口
+│       └── package.json       # 前端依赖配置
+├── backend/               # FastAPI 后端服务
+│   ├── app/
+│   │   ├── auth.py           # 用户认证模块
+│   │   ├── inference.py      # 模型推理接口
+│   │   ├── preprocess.py     # 代码预处理
+│   │   ├── main.py           # 主应用入口
+│   │   └── config.py         # 配置管理
+│   └── requirements.txt      # Python 依赖
+├── gnn_core/              # GNN 模型核心
+│   ├── tools/             # 预处理工具
+│   ├── GNNSCModel.py      # GNN 模型定义
+│   ├── GNNSCModel.pkl     # 训练好的模型权重
+│   └── data/              # 训练数据
+├── .venv/                 # Python 虚拟环境
+├── users.db               # 用户数据库
+├── install.bat            # 一键安装脚本
+├── start.bat              # 一键启动脚本
+└── README.md              # 项目文档
+```
+
+## 📋 支持的漏洞类型
+
+- **重入攻击 (Reentrancy)**: 合约在调用外部合约前未更新状态
+- **整数溢出 (Integer Overflow)**: 算术运算超出类型范围
+- **访问控制问题 (Access Control)**: 权限检查不当
+- **未初始化变量**: 使用未初始化的存储变量
+- **其他常见 Solidity 安全漏洞**
+
+## 🛠️ 安装与运行
+
+### 环境要求
+
+- **Python**: 3.7+
+- **Node.js**: 16+ (推荐安装到 `C:\Program Files\nodejs`)
+- **操作系统**: Windows/Linux/macOS
+- **内存**: 建议 8GB+ RAM
+- **磁盘空间**: 2GB+ 可用空间
+
+### 快速安装 (Windows)
+
+1. 确保已安装 Python 3.7+ 和 Node.js 16+
+2. 双击运行项目根目录的 `install.bat` 文件
+3. 等待安装完成（可能需要几分钟）
+4. 运行 `start.bat` 启动系统
+
+### 手动安装
+
+#### 1. Python 环境设置
+
+```bash
+# 创建虚拟环境
+python -m venv .venv
+
+# 激活虚拟环境 (Windows)
+.venv\Scripts\activate
+
+# 安装后端依赖
+pip install -r backend/requirements.txt
+```
+
+#### 2. Node.js 环境设置
+
+**重要**: 确保 Node.js 已正确安装并添加到系统 PATH
+
+```bash
+# 检查 Node.js 版本
+node --version  # 应显示 v16+ 版本
+npm --version   # 应显示 6+ 版本
+
+# 如果 PATH 未正确设置，手动添加
+set PATH=%PATH%;"C:\Program Files\nodejs"
+```
+
+#### 3. 前端设置
+
+```bash
+# 进入前端目录
+cd frontend/web
+
+# 安装前端依赖 (包括 View UI Plus)
+npm install
+
+# 如果安装失败，尝试清除缓存
+npm cache clean --force
+npm install
+```
+
+### 4. 启动服务
+
+#### 快速启动脚本 (Windows)
+
+双击运行项目根目录的 `start.bat` 文件，或在命令行中执行：
+
+```bash
+./start.bat
+```
+
+该脚本会自动：
+1. 检查 Python 和 Node.js 环境
+2. 激活虚拟环境
+3. 启动后端服务 (端口 8000)
+4. 启动前端服务 (端口 8080)
+
+#### 手动启动
+
+**终端1: 启动后端服务**
+```bash
+# 在项目根目录
+.venv\Scripts\activate
+uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+**终端2: 启动前端服务**
+```bash
+# 在 frontend/web 目录
+cd frontend/web
+
+# 设置 Node.js PATH (如果需要)
+$env:Path = "C:\Program Files\nodejs;" + $env:Path
+
+# 启动开发服务器
+npm run serve
+```
+
+#### 服务状态检查
+
+- **后端API**: http://localhost:8000
+- **前端应用**: http://localhost:8080
+- **API文档**: http://localhost:8000/docs
+- **健康检查**: http://localhost:8000/api/health
+
+## 📖 使用方法
+
+### 1. 访问应用
+
+打开浏览器访问: **http://localhost:8080**
+
+### 2. 用户注册/登录
+
+1. 首次访问会显示登录页面
+2. 点击"注册"标签创建新账号，或使用现有账号登录
+3. 登录成功后自动跳转到主页
+
+### 3. 导航使用
+
+系统采用左侧导航栏设计，所有页面都包含以下导航项：
+- 🏠 **主页**: 查看统计信息和最新合约
+- 🔍 **漏洞检测**: 进行 Solidity 代码安全分析
+- ⏰ **检测历史**: 查看和管理历史检测记录
+- 📖 **使用指南**: 详细的使用说明和API文档
+- 💻 **系统信息**: 查看前后端服务状态
+- 🚪 **退出登录**: 安全退出系统
+
+### 4. 漏洞检测
+
+1. 点击左侧导航栏的"漏洞检测"
+2. 在左侧代码输入框中粘贴或输入 Solidity 合约代码
+3. 点击"开始检测"按钮
+4. 查看右侧的检测结果，包括：
+   - 🔴 发现的漏洞数量和类型
+   - 📊 检测置信度评分
+   - ⏱️ 处理时间
+   - 📋 详细漏洞列表和修复建议
+   - 🔍 完整检测结果的JSON查看
+
+### 5. 查看历史记录
+
+1. 点击左侧导航栏的"检测历史"
+2. 浏览历史检测记录的卡片列表
+3. 点击"查看完整详情"展开详细信息
+4. 使用标签页切换查看完整代码和检测结果
+5. 可选择清空所有历史记录
+
+### 6. 系统监控
+
+1. 点击左侧导航栏的"系统信息"
+2. 查看前端和后端的技术栈信息
+3. 监控API连接状态和服务健康情况
+4. 检查系统资源使用情况
+
+## 🔌 API 文档
+
+### 认证接口
+
+#### 用户注册
+```http
+POST /api/auth/register
+Content-Type: application/json
+
+{
+  "username": "string",
+  "password": "string"
+}
+```
+
+#### 用户登录
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "username": "string",
+  "password": "string"
+}
+```
+
+**响应:**
+```json
+{
+  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+  "token_type": "bearer"
+}
+```
+
+### 检测接口
+
+#### 漏洞检测
+```http
+POST /api/detect
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "code": "pragma solidity ^0.8.0;\ncontract Test {\n    // Solidity code here\n}"
+}
+```
+
+**响应:**
+```json
+{
+  "vulnerabilities": [
+    {
+      "type": "Reentrancy",
+      "description": "Potential reentrancy vulnerability",
+      "location": "line 15"
+    }
+  ],
+  "confidence": 0.85,
+  "processing_time": 2.34
+}
+```
+
+### API 文档访问
+
+完整 API 文档: **http://127.0.0.1:8000/docs**
+
+## 🔧 配置说明
+
+### 环境变量
+
+创建 `.env` 文件在 `backend/` 目录下：
+
+```env
+# 模型路径
+MODEL_PATH=gnn_core/GNNSCModel.pkl
+
+# JWT 配置
+SECRET_KEY=your-secret-key-here
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# 数据库
+DATABASE_URL=sqlite:///./users.db
+```
+
+### 模型配置
+
+GNN 模型文件位于 `gnn_core/` 目录：
+- `GNNSCModel.py`: 模型定义
+- `GNNSCModel.pkl`: 训练好的模型权重
+
+## 🧪 测试
+
+### 运行后端测试
+
+```bash
+cd backend
+python -m pytest tests/
+```
+
+### 示例 Solidity 代码
+
+```solidity
+pragma solidity ^0.8.0;
+
+contract VulnerableContract {
+    mapping(address => uint256) public balances;
+
+    function deposit() public payable {
+        balances[msg.sender] += msg.value;
+    }
+
+    function withdraw(uint256 amount) public {
+        require(balances[msg.sender] >= amount);
+        (bool success, ) = msg.sender.call{value: amount}("");
+        require(success);
+        balances[msg.sender] -= amount; // 重入攻击漏洞
+    }
+}
+```
+
+## 🚀 功能状态
+
+### ✅ 已完成功能
+
+- [x] **现代化前端界面**: Vue.js 3 + View UI Plus，渐变背景和动画效果
+- [x] **全局导航栏**: 左侧导航栏在所有页面常驻
+- [x] **响应式设计**: 适配桌面和移动设备
+- [x] **用户认证系统**: JWT 令牌认证
+- [x] **历史记录管理**: 本地存储和管理检测历史
+- [x] **系统状态监控**: 实时API健康检查
+- [x] **RESTful API**: FastAPI 高性能后端服务
+- [x] **GNN模型集成**: 图神经网络漏洞检测
+- [x] **代码预处理**: Solidity AST分析
+- [x] **批量检测支持**: 支持多个合约检测
+
+### 🚧 进行中功能
+
+- [ ] 支持更多漏洞类型检测 (重入、溢出、访问控制等)
+- [ ] 集成多种机器学习模型
+- [ ] 实现实时代码分析
+
+### 📋 计划功能
+
+- [ ] 添加批量检测功能
+- [ ] 支持 Solidity 最新版本语法
+- [ ] 添加详细的安全修复建议
+- [ ] 集成 CI/CD 安全检查
+- [ ] 提供 WebSocket 实时通知接口
+- [ ] 添加用户项目管理功能
+- [ ] 支持导入/导出检测报告
+- [ ] 添加团队协作功能
+
+## 📄 许可证
+
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
+
+## ⚠️ 免责声明
+
+本工具仅用于教育和研究目的。检测结果仅供参考，不应作为唯一的安会评估依据。建议结合人工审核和专业安全工具进行全面的安全评估。
+
+## � 故障排除
+
+### 常见问题
+
+#### 1. TensorFlow 版本兼容性
+如果遇到 TensorFlow 相关错误，确保使用正确的版本：
+```bash
+pip install tensorflow==1.14.0 keras==2.2.4
+```
+
+#### 2. Node.js 环境问题
+确保 Node.js 版本 >= 16：
+```bash
+node --version
+npm --version
+```
+
+#### 3. 端口占用
+如果 8000 或 8080 端口被占用：
+```bash
+# 检查端口占用
+netstat -ano | findstr :8000
+
+# 杀死进程 (Windows)
+taskkill /PID <PID> /F
+```
+
+#### 4. 虚拟环境激活失败
+Windows PowerShell 可能需要执行策略：
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+#### 5. 前端编译错误
+清除 node_modules 并重新安装：
+```bash
+cd frontend/web
+rm -rf node_modules package-lock.json
+npm install
+```
+
+### 性能优化
+
+- **GPU 支持**: 如果有 NVIDIA GPU，可以安装 GPU 版本的 TensorFlow
+- **内存优化**: 大型合约可能需要增加内存限制
+- **并发处理**: 后端支持异步处理多个请求
+- **缓存优化**: 前端已实现组件懒加载和代码分割
+
+## 🔧 高级配置
+
+### Node.js 环境变量设置
+
+如果经常遇到 Node.js 路径问题，可以永久添加到系统环境变量：
+
+1. 右键"此电脑" → "属性" → "高级系统设置"
+2. 点击"环境变量"
+3. 在"系统变量"中的"Path"变量中添加：
+   ```
+   C:\Program Files\nodejs\
+   ```
+
+### 前端开发配置
+
+前端支持热重载开发模式，修改代码后自动刷新浏览器。
+
+```bash
+cd frontend/web
+
+# 开发模式 (默认)
+npm run serve
+
+# 生产构建
+npm run build
+
+# 代码检查
+npm run lint
+```
+
+### 后端开发配置
+
+后端支持自动重载，便于开发调试。
+
+```bash
+# 开发模式 (自动重载)
+uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
+
+# 生产模式
+uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
+```</content>
+<parameter name="filePath">d:\D\README.md

@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+*.log
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+frontend/web/dist/
+
+# IDE
+.vscode/
+.idea/
+
+# System
+.DS_Store
+Thumbs.db
+
+# Project specific
+tmp/
+backend/app/__pycache__/
+gnn_core/saved_models/*.h5
+gnn_core/saved_models/*.json
+!gnn_core/saved_models/.gitkeep

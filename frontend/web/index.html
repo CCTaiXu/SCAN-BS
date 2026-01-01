@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>智能合约安全分析台</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #0c1220;
+      --panel-strong: #0b0f1c;
+      --accent: #38bdf8;
+      --accent-strong: #06b6d4;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #1f2937;
+      --danger: #f87171;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --shadow: 0 18px 80px rgba(0,0,0,0.45);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at 15% 25%, rgba(56,189,248,0.08), transparent 35%),
+                  radial-gradient(circle at 85% 10%, rgba(6,182,212,0.08), transparent 35%),
+                  var(--bg);
+      color: var(--text);
+      display: flex;
+      padding: 26px;
+    }
+
+    .layout { display: grid; grid-template-columns: 230px 1fr; gap: 20px; width: 100%; max-width: 1400px; margin: 0 auto; }
+    .sidebar { background: var(--panel-strong); border: 1px solid var(--border); border-radius: 16px; padding: 18px; box-shadow: var(--shadow); }
+    .main { background: linear-gradient(145deg, rgba(17,24,39,0.94), rgba(12,18,32,0.96)); border: 1px solid var(--border); border-radius: 18px; padding: 22px; box-shadow: var(--shadow); }
+
+    .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    .logo { width: 38px; height: 38px; border-radius: 12px; background: linear-gradient(135deg, var(--accent), var(--accent-strong)); display: flex; align-items: center; justify-content: center; font-weight: 700; color: #0b1220; box-shadow: 0 10px 30px rgba(6,182,212,0.35); }
+    .brand h1 { margin: 0; font-size: 18px; }
+    .nav { display: flex; flex-direction: column; gap: 8px; }
+    .nav button { width: 100%; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 12px; padding: 10px 12px; text-align: left; font-weight: 600; cursor: pointer; transition: border 120ms ease, background 120ms ease, transform 120ms ease; }
+    .nav button:hover { transform: translateY(-1px); }
+    .nav button.active { border-color: var(--accent); background: rgba(56,189,248,0.1); box-shadow: 0 10px 30px rgba(6,182,212,0.18); }
+
+    .top-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; align-items: center; }
+    .pill { padding: 7px 12px; border-radius: 999px; background: rgba(56,189,248,0.12); color: var(--accent); font-weight: 600; border: 1px solid rgba(56,189,248,0.3); font-size: 13px; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.02); }
+    .card h2 { margin: 0 0 10px 0; font-size: 17px; }
+    .muted { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+    input[type="file"], textarea, .text-input, select {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: #0b1220;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px;
+      font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+      font-size: 14px;
+    }
+    textarea { min-height: 220px; resize: vertical; }
+    .text-input { height: 42px; }
+
+    .actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #0b1220;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      box-shadow: 0 10px 30px rgba(6,182,212,0.35);
+      transition: transform 120ms ease, box-shadow 120ms ease;
+    }
+    button.ghost { background: #1f2937; color: var(--muted); box-shadow: none; }
+    button:disabled { opacity: 0.65; cursor: not-allowed; box-shadow: none; }
+    button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 12px 36px rgba(6,182,212,0.45); }
+
+    .result { white-space: pre-wrap; background: #0b1220; border: 1px solid var(--border); border-radius: 12px; padding: 14px; min-height: 140px; font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; color: var(--text); }
+    .status { margin-top: 8px; font-size: 13px; }
+    .status.ok { color: var(--success); }
+    .status.err { color: var(--danger); }
+    .status.warn { color: var(--warning); }
+
+    .badge { padding: 4px 8px; border-radius: 8px; font-size: 12px; border: 1px solid var(--border); color: var(--muted); }
+    .badge.ok { border-color: rgba(52,211,153,0.5); color: var(--success); }
+    .badge.danger { border-color: rgba(248,113,113,0.5); color: var(--danger); }
+
+    .history-list { max-height: 260px; overflow: auto; display: flex; flex-direction: column; gap: 10px; }
+    .history-item { border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: #0b1220; }
+    .history-title { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 6px; font-size: 14px; }
+    .history-meta { color: var(--muted); font-size: 12px; display: flex; gap: 8px; }
+    .code-sample { background: #0b1220; border: 1px solid var(--border); border-radius: 12px; padding: 12px; font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; color: var(--text); }
+
+    .section { display: none; gap: 16px; flex-direction: column; }
+    .section.active { display: flex; }
+
+    @media (max-width: 960px) {
+      body { padding: 14px; }
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { order: -1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">G</div>
+        <div>
+          <h1>合约安全</h1>
+          <div class="muted">GNN 检测 · TF1</div>
+        </div>
+      </div>
+      <div class="nav">
+        <button class="active" data-target="section-detect" onclick="switchSection('section-detect', this)">检测台</button>
+        <button data-target="section-history" onclick="switchSection('section-history', this)">检测记录</button>
+        <button data-target="section-guide" onclick="switchSection('section-guide', this)">使用指南</button>
+        <button data-target="section-about" onclick="switchSection('section-about', this)">模型与系统</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="top-row">
+        <div class="pill">本地推理 · 需要登录</div>
+        <div class="pill" id="authStatus">未登录</div>
+      </div>
+
+      <section id="section-detect" class="section active">
+        <div class="grid">
+          <div class="card">
+            <h2>账号</h2>
+            <input id="username" class="text-input" placeholder="用户名" autocomplete="username" />
+            <div style="height: 10px;"></div>
+            <input id="password" class="text-input" type="password" placeholder="密码" autocomplete="current-password" />
+            <div class="actions">
+              <button id="btnLogin" onclick="login()">登录</button>
+              <button onclick="registerUser()">注册</button>
+              <button class="ghost" onclick="logout()">退出</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>方式一：上传 .sol</h2>
+            <input type="file" id="fileInput" accept=".sol" />
+            <div class="actions">
+              <button id="btnUpload" onclick="uploadFile()">上传并检测</button>
+              <button class="ghost" onclick="resetResult()">清空结果</button>
+            </div>
+            <div class="muted">支持直接上传 Solidity 源文件。</div>
+          </div>
+
+          <div class="card">
+            <h2>方式二：粘贴源码</h2>
+            <textarea id="codeInput" placeholder="在这里粘贴 Solidity 代码"></textarea>
+            <div class="actions">
+              <button id="btnSubmit" onclick="submitCode()">提交检测</button>
+              <button class="ghost" onclick="resetResult()">清空结果</button>
+              <button class="ghost" onclick="fillSample()">填充示例</button>
+            </div>
+            <div class="muted">我们会直接将代码发送至后端进行分析。</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>检测结果 <span class="badge" id="status">等待检测...</span></h2>
+          <div id="result" class="result">尚未提交任务。</div>
+        </div>
+      </section>
+
+      <section id="section-history" class="section">
+        <div class="card">
+          <h2>最近检测记录</h2>
+          <div class="muted">保存在浏览器本地（最多 20 条）。</div>
+          <div id="historyList" class="history-list"></div>
+          <div class="actions">
+            <button class="ghost" onclick="clearHistory()">清空记录</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="section-guide" class="section">
+        <div class="card">
+          <h2>快捷操作</h2>
+          <div class="actions" style="flex-wrap: wrap;">
+            <button class="ghost" onclick="openDocs()">打开 API 文档</button>
+            <button class="ghost" onclick="fillSample()">填充示例代码</button>
+            <button class="ghost" onclick="copyCurl()">复制 cURL 示例</button>
+          </div>
+          <div class="muted">需要先登录并携带 Bearer Token 调用 /api/detect。</div>
+        </div>
+        <div class="card">
+          <h2>cURL 示例</h2>
+          <div class="code-sample" id="curlSample"></div>
+        </div>
+      </section>
+
+      <section id="section-about" class="section">
+        <div class="grid">
+          <div class="card">
+            <h2>模型信息</h2>
+            <div class="muted">GNNSCModel · TensorFlow 1.14 · Keras 2.2.4</div>
+            <div class="muted">权重路径：<span id="modelPath">默认 gnn_core/saved_models/model_best.pickle</span></div>
+          </div>
+          <div class="card">
+            <h2>系统状态</h2>
+            <div class="muted">后端地址：<span id="apiBaseTxt">http://127.0.0.1:8000</span></div>
+            <div class="muted">登录状态：<span id="loginState">未登录</span></div>
+            <div class="muted">本地存储 Token：<span id="tokenState">无</span></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const apiBase = "http://127.0.0.1:8000";
+    const tokenKey = "vuln_token";
+    const historyKey = "vuln_history";
+    let token = localStorage.getItem(tokenKey) || "";
+
+    function switchSection(id, btn) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      if (id === 'section-history') renderHistory();
+      if (id === 'section-guide') renderCurl();
+      if (id === 'section-about') refreshAbout();
+    }
+
+    function setAuthStatus(msg, type = "muted") {
+      const el = document.getElementById("authStatus");
+      el.textContent = msg;
+      el.style.color = type === "ok" ? "var(--success)" : type === "err" ? "var(--danger)" : "var(--accent)";
+      document.getElementById("loginState").textContent = msg;
+    }
+
+    function setStatus(msg, type = "muted") {
+      const el = document.getElementById("status");
+      el.textContent = msg;
+      el.className = `badge ${type}`;
+    }
+
+    function setResult(content) {
+      document.getElementById("result").textContent = content;
+    }
+
+    function resetResult() {
+      setStatus("等待检测...", "");
+      setResult("尚未提交任务。");
+    }
+
+    async function uploadFile() {
+      const fileInput = document.getElementById("fileInput");
+      if (!fileInput.files.length) {
+        setStatus("请先选择一个 .sol 文件", "warn");
+        return;
+      }
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+      await doRequest(formData, `文件: ${fileInput.files[0].name}`);
+    }
+
+    async function submitCode() {
+      const code = document.getElementById("codeInput").value.trim();
+      if (!code) {
+        setStatus("请先粘贴 Solidity 代码", "warn");
+        return;
+      }
+      const formData = new FormData();
+      formData.append("code", code);
+      await doRequest(formData, "粘贴代码");
+    }
+
+    async function doRequest(formData, label = "") {
+      if (!token) {
+        setStatus("请先登录", "err");
+        return;
+      }
+      setStatus("检测中...", "");
+      setResult("请稍候，正在推理...");
+      toggleButtons(true);
+      try {
+        const res = await fetch(apiBase + "/api/detect", {
+          method: "POST",
+          body: formData,
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } catch (e) { data = { error: "无法解析返回" }; }
+
+        if (!res.ok) {
+          const detail = data?.detail || data?.error || `HTTP ${res.status}`;
+          setStatus(`请求失败：${detail}`, "err");
+          setResult(JSON.stringify(data, null, 2));
+          return;
+        }
+
+        setStatus("检测完成", "ok");
+        const pretty = JSON.stringify(data, null, 2);
+        setResult(pretty);
+        pushHistory({ label, timestamp: Date.now(), data });
+      } catch (err) {
+        setStatus(`网络或服务错误：${err}`, "err");
+        setResult(String(err));
+      } finally {
+        toggleButtons(false);
+      }
+    }
+
+    function toggleButtons(disabled) {
+      document.getElementById("btnUpload").disabled = disabled;
+      document.getElementById("btnSubmit").disabled = disabled;
+    }
+
+    async function registerUser() {
+      const { username, password } = getCreds();
+      if (!username || !password) return;
+      setAuthStatus("注册中...", "");
+      const data = await authRequest("/api/auth/register", { username, password });
+      if (data) {
+        saveToken(data.access_token);
+        setAuthStatus("注册并登录成功", "ok");
+        await fetchProfile();
+      }
+    }
+
+    async function login() {
+      const { username, password } = getCreds();
+      if (!username || !password) return;
+      setAuthStatus("登录中...", "");
+      const data = await authRequest("/api/auth/login", { username, password });
+      if (data) {
+        saveToken(data.access_token);
+        setAuthStatus("登录成功", "ok");
+        await fetchProfile();
+      }
+    }
+
+    function logout() {
+      token = "";
+      localStorage.removeItem(tokenKey);
+      setAuthStatus("已退出，需登录后检测", "muted");
+      setStatus("等待检测...", "");
+      refreshAbout();
+    }
+
+    function getCreds() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      if (!username || !password) {
+        setAuthStatus("请输入用户名和密码", "err");
+        return {};
+      }
+      return { username, password };
+    }
+
+    async function authRequest(path, body) {
+      try {
+        const res = await fetch(apiBase + path, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          const detail = data?.detail || data?.error || `HTTP ${res.status}`;
+          setAuthStatus(`失败：${detail}`, "err");
+          return null;
+        }
+        return data;
+      } catch (err) {
+        setAuthStatus(`网络错误：${err}`, "err");
+        return null;
+      }
+    }
+
+    function saveToken(t) {
+      token = t || "";
+      if (token) localStorage.setItem(tokenKey, token);
+      refreshAbout();
+    }
+
+    async function fetchProfile() {
+      if (!token) return;
+      try {
+        const res = await fetch(apiBase + "/api/auth/me", { headers: { Authorization: `Bearer ${token}` } });
+        const data = await res.json();
+        if (!res.ok) {
+          const detail = data?.detail || "未登录";
+          setAuthStatus(detail, "err");
+          return;
+        }
+        setAuthStatus(`已登录：${data.user.username}`, "ok");
+      } catch (err) {
+        setAuthStatus(`网络错误：${err}`, "err");
+      } finally {
+        refreshAbout();
+      }
+    }
+
+    function fillSample() {
+      const sample = `pragma solidity ^0.4.24;
+contract Vault {
+    mapping(address => uint256) public balances;
+    function deposit() public payable {
+        balances[msg.sender] += msg.value;
+    }
+    function withdraw() public {
+        uint256 amount = balances[msg.sender];
+        require(amount > 0);
+        (bool ok, ) = msg.sender.call.value(amount)("");
+        require(ok);
+        balances[msg.sender] = 0;
+    }
+}`;
+      document.getElementById("codeInput").value = sample;
+    }
+
+    function pushHistory(entry) {
+      const list = JSON.parse(localStorage.getItem(historyKey) || "[]");
+      list.unshift(entry);
+      if (list.length > 20) list.pop();
+      localStorage.setItem(historyKey, JSON.stringify(list));
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const list = JSON.parse(localStorage.getItem(historyKey) || "[]");
+      const container = document.getElementById("historyList");
+      if (!list.length) { container.innerHTML = '<div class="muted">暂无记录</div>'; return; }
+      container.innerHTML = list.map(item => {
+        const time = new Date(item.timestamp).toLocaleString();
+        const summary = JSON.stringify(item.data).slice(0, 140) + (JSON.stringify(item.data).length > 140 ? '...' : '');
+        return `<div class="history-item">
+          <div class="history-title"><span>${item.label || '检测'}</span><span class="history-meta">${time}</span></div>
+          <div class="history-meta">${summary}</div>
+        </div>`;
+      }).join("");
+    }
+
+    function clearHistory() {
+      localStorage.removeItem(historyKey);
+      renderHistory();
+    }
+
+    function renderCurl() {
+      const demoToken = token ? token : "<ACCESS_TOKEN>";
+      const sample = `curl -X POST ${apiBase}/api/detect \\\n+  -H "Authorization: Bearer ${demoToken}" \\\n+  -H "Content-Type: application/json" \\\n+  -d '{"source":"pragma solidity ^0.4.0; contract C { function f() public {} }"}'`;
+      document.getElementById("curlSample").textContent = sample;
+    }
+
+    function copyCurl() {
+      const text = document.getElementById("curlSample").textContent;
+      navigator.clipboard.writeText(text);
+      setStatus("已复制 cURL", "ok");
+    }
+
+    function openDocs() { window.open(apiBase + "/docs", "_blank"); }
+
+    function refreshAbout() {
+      document.getElementById("apiBaseTxt").textContent = apiBase;
+      document.getElementById("tokenState").textContent = token ? "已保存" : "无";
+    }
+
+    (async function init() {
+      refreshAbout();
+      renderHistory();
+      renderCurl();
+      if (token) {
+        await fetchProfile();
+      } else {
+        setAuthStatus("未登录", "muted");
+      }
+    })();
+  </script>
+</body>
+</html>

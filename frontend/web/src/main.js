@@ -1,0 +1,11 @@
+import { createApp } from 'vue'
+import App from './App.vue'
+import ViewUIPlus from 'view-ui-plus'
+import 'view-ui-plus/dist/styles/viewuiplus.css'
+import '@fortawesome/fontawesome-free/css/all.min.css'
+import router from './router'
+
+const app = createApp(App)
+app.use(ViewUIPlus)
+app.use(router)
+app.mount('#app')
