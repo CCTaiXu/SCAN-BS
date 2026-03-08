@@ -1,103 +1,140 @@
-# Solidity 智能合约漏洞检测系统
+# SCAN-BS: 智能合约漏洞检测系统 (GNN-SCVulScan)
 
-基于图神经网络 (GNN) 的智能合约安全漏洞检测系统。本项目利用深度学习技术，通过分析 Solidity 代码的控制流图 (CFG) 来识别潜在的安全漏洞（如重入攻击、时间戳依赖等）。系统包含完整的 FastAPI 后端和 Vue.js 前端界面。
+[![Python Support](https://img.shields.io/badge/Python-3.7-blue.svg)](https://www.python.org/downloads/release/python-3712/)
+[![TensorFlow](https://img.shields.io/badge/TensorFlow-1.14.0-orange)](https://www.tensorflow.org/)
+[![Vue](https://img.shields.io/badge/Vue-3.x-brightgreen.svg)](https://vuejs.org/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+基于图神经网络 (GNN) 的智能合约安全漏洞检测系统。本项目利用深度学习技术，通过自动化提取 Solidity 代码的图结构特征，识别 **重入攻击 (Reentrancy)**、**时间戳依赖 (Timestamp Dependence)** 及 **整数溢出 (Integer Overflow)** 等关键安全漏洞。系统集成了可视化前端、FastAPI 后端以及完整的模型训练与特征提取流水线。
 
 ## 📚 项目背景
 
-本项目基于以下研究工作实现：
+本项目基于以下前沿研究进行扩展及工程化实现：
 > Zhuang, Yuan, et al. "Smart Contract Vulnerability Detection using Graph Neural Network." IJCAI. 2020.
 
-核心 GNN 模型代码参考自: [GNNSCVulDetector](https://github.com/Messi-Q/GNNSCVulDetector)
+## 🌟 核心功能
 
-## 🛠️ 环境要求
+*   **多漏洞模式检测**：支持重入攻击、时间戳依赖、整数溢出的高精准识别。
+*   **双模式检测**：支持单文件实时在线审计与批量 Solidity 源码上传扫描。
+*   **可视化分析**：提供合约代码图结构的可视化展示（将代码转换为节点与交互关系的图谱）。
+*   **全自动训练管线**：内置自动化工具集，一键完成代码去注释化 -> 片段构建 -> 特征提取 -> JSON 序列化 -> GNN 训练。
+*   **交互友好**：现代化 Vue 3 驱动的前端界面，提供直观的代码高亮、在线分析以及实时报告。
 
-为了确保系统正常运行，请严格遵守以下环境要求：
+## 🛠️ 环境依赖
 
-- **操作系统**: Windows / Linux / macOS
-- **Python**: **3.7** (必须，因为 TensorFlow 1.14.0 仅支持 Python 3.7 及以下)
-- **Node.js**: 14+ (推荐 16 LTS)
-- **Java**: JDK 8+ (用于解析 Solidity 代码生成图结构)
+由于模型对特定框架版本有严格兼容性要求，请务必遵循以下环境配置：
 
-## ⚡ 快速开始
+*   **Python**: `3.7.x` (强制要求，兼容 TensorFlow 1.1x)
+*   **Node.js**: `v14+` / `v16+`
+*   **TensorFlow**: `1.14.0`
+*   **Solidity 编译器**: `solc` 对应的指定版本依赖
 
-### 1. 环境安装
+## ⚡ 快速安装与启动
 
-#### 后端 (Backend)
+### 方式一：一键启动 (Windows 推荐)
 
-建议使用虚拟环境以避免依赖冲突。
+直接双击运行根目录下的 `start.bat` 脚本（首次运行可使用 `install.bat` 预先安装所需模块）。
+
+该脚本会自动：
+1. 检查对应的 Python 与 Node 运行环境。
+2. 激活系统的 `.venv` 虚拟环境。
+3. 后台启动 FastAPI 后端服务 (默认端口 `8000`)。
+4. 启动 Vue 前端开发服务器 (默认端口 `8080` / `5173`)，并打印访问网址。
+
+### 方式二：手动配置与启动
+
+#### 1. 后端设置
 
 ```bash
-# 1. 创建虚拟环境 (Python 3.7)
+# 1. 创建并激活 Python 3.7 虚拟环境
 python -m venv .venv
+.venv\Scripts\activate  # Windows
+# source .venv/bin/activate # Linux/Mac
 
-# 2. 激活虚拟环境
-# Windows:
-.venv\Scripts\activate
-# Linux/macOS:
-source .venv/bin/activate
-
-# 3. 安装依赖
+# 2. 安装依赖包
 pip install -r backend/requirements.txt
 ```
 
-#### 前端 (Frontend)
+#### 2. 前端设置
 
 ```bash
 cd frontend/web
 npm install
 ```
 
-### 2. 模型训练 (可选)
+#### 3. 运行服务
 
-如果需要重新训练模型，请执行以下步骤。项目中已包含预训练模型，可直接跳过此步。
+*   **启动后端**: `uvicorn backend.app.main:app --reload`
+*   **启动前端**: 在 `frontend/web` 目录下执行 `npm run serve` (或 `npm run dev`)
 
+## 🧠 模型开发与训练指南
+
+如果您希望基于我们的 GNN 算法训练自定义的新型漏洞识别模型，可直接利用其自动化流水线。
+
+### 1. 数据准备
+将收集好的 Solidity 源码 (.sol) 分类放入指定的原始代码文件夹，例如：
+* `gnn_core/data/reentrancy/source_code/`
+* `gnn_core/data/timestamp/source_code/`
+* `gnn_core/data/integeroverflow/source_code/`
+
+### 2. 标签建立
+在对应的特征工具目录下，确保定义了相关的合约名与漏洞标签映射：
+*   映射列表：`gnn_core/features/[vulnerability_type]/contract_name_train.txt`
+*   专家标签：`gnn_core/features/[vulnerability_type]/label_by_experts_train.txt` (仅需要 1 或 0)
+
+### 3. 一键特征工程
+系统将自动完成代码修剪、抽象语法树 (AST) 图转化到向量化的全过程：
 ```bash
-# 确保在根目录下且已激活虚拟环境
+python gnn_core/run_pipeline.py
+```
+
+### 4. 开启训练
+生成的序列化数据集输入图神经网络进行深度特征匹配与泛化学习：
+```bash
 cd gnn_core
-python BasicModel.py
+bash train.sh
+# 或手动配置超参
+python GNNSCModel.py --thresholds 0.5
 ```
-训练完成后，模型将保存至 `gnn_core/saved_models/`。
 
-### 3. 启动系统
+## 📂 核心目录结构
 
-#### 启动后端服务
-
-```bash
-# 在项目根目录下
-uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
-```
-后端服务将在 `http://localhost:8000` 启动。
-
-#### 启动前端界面
-
-```bash
-# 打开新的终端窗口
-cd frontend/web
-npm run serve
-```
-前端服务通常会在 `http://localhost:8080` 或 `http://localhost:8081` 启动 (取决于端口占用情况，请查看终端输出)。
-
-## 📖 使用指南
-
-1. **访问系统**: 打开浏览器访问前端地址。
-2. **用户登录**: 点击左侧 "用户登录"。
-   - 如果是首次使用，系统会自动处理或使用默认测试账号（视具体配置而定）。
-   - 登录成功后获取 Token，用于后续检测请求。
-3. **漏洞检测**:
-   - 进入 "漏洞检测" 页面。
-   - 在代码编辑框中粘贴 Solidity 智能合约代码。
-   - 点击 "开始检测"。
-4. **查看结果**:
-   - 系统将显示检测结果（安全/存在漏洞）。
-   - 显示漏洞类型（如 Reentrancy）。
-   - 显示模型置信度 (Confidence)。
-
-## 📂 项目结构
-
-```
-.
-├── backend/                # Python 后端 (FastAPI)
+```text
+SCAN-BS/
+├── backend/                # FastAPI 后端服务 (提供编译、检测及图生成 API)
 │   ├── app/
+│   │   ├── main.py         # 路由和接口注册
+│   │   ├── preprocess.py   # 源码预处理与验证
+│   │   └── inference.py    # GNN 推理调用封装
+├── frontend/               # Vue 网页前端代码
+├── gnn_core/               # 核心 GNN 模型及算法实现 (基于 TensorFlow 1.x)
+│   ├── tmp_pipeline/       # 自动生成的代码中间件与图谱解析日志
+│   ├── tools/              # 特征解析工具 (如 AST 到图结构)
+│   ├── data/               # 原始和处理后得图数据存储区
+│   └── saved_models/       # 预训练参数与模型持久化备份
+└── start.bat / install.bat # Windows 快捷启动配置
+```
+
+## 🤝 贡献与开源许可
+
+欢迎提交 Issue 和 Pull Request！
+本项目使用 MIT License 开源，详见代码仓。
+如有学术使用需求请务必引用原文或保留致谢声明。
+│   ├── data/               # 原始数据集存放
+│   ├── train_data/         # 训练用的 JSON 数据
+│   ├── run_pipeline.py     # ✅ 自动化数据处理脚本
+│   └── GNNSCModel.py       # 模型训练主程序
+└── start.bat               # Windows 一键启动脚本
+```
+
+## ⚠️ 注意事项
+
+*   **代码注释**: 为了提升图提取工具 `AutoExtractGraph` 的解析稳定性，我们引入了正则去注释机制。复杂的注释结构可能会影响特征提取。
+*   **模型兼容性**: 由于使用 TensorFlow 1.x 的旧版 API，请务必保持 Python 版本为 3.7。
+
+## 📜 版权信息
+
+本项目代码遵循 MIT 协议开源。核心算法参考自 [GNNSCVulDetector](https://github.com/Messi-Q/GNNSCVulDetector)。
 │   │   ├── main.py         # API 入口
 │   │   ├── inference.py    # 模型推理逻辑
 │   │   ├── preprocess.py   # 数据预处理
